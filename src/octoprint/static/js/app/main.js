@@ -193,7 +193,17 @@ $(function() {
 
                 // now we'll try to resolve all of the view model's constructor parameters via our view model map
                 var constructorParameters = _.map(viewModelParameters, function(parameter){
-                    return viewModelMap[parameter]
+                    var cleanParameter = _dependecies.clean(parameter);
+
+                    if(optionalDependecies) {
+                        // Check if the viewModel is not defined and if the required parameter is optional return null
+                        if(_dependecies.isOptional(parameter) && !viewModelMap[cleanParameter]) {
+                            log.debug("Constructing with an optional nullified parameter:", cleanParameter);
+                            return null;
+                        }
+                    }
+
+                    return viewModelMap[cleanParameter]
                 });
             } else {
                 constructorParameters = [];
@@ -234,6 +244,16 @@ $(function() {
             return name.substr(0, 1).toLowerCase() + name.substr(1); // FooBarViewModel => fooBarViewModel
         };
 
+        // helper for checking dependencies
+        var _dependecies = {
+            clean: function(dependecy) {
+                return (dependecy.substring(0, 1) === "!") ? dependecy.substring(1) : dependecy;
+            },
+            isOptional: function(dependecy) {
+                return (dependecy.substring(0, 1) === "!");
+            }
+        }
+
         // instantiation loop, will make multiple passes over the list of unprocessed view models until all
         // view models have been successfully instantiated with all of their dependencies or no changes can be made
         // any more which means not all view models can be instantiated due to missing dependencies
@@ -243,11 +263,16 @@ $(function() {
         var allViewModels = [];
         var allViewModelData = [];
         var pass = 1;
+        var optionalDependecies = false;
         log.info("Starting dependency resolution...");
         while (unprocessedViewModels.length > 0) {
             log.debug("Dependency resolution, pass #" + pass);
             var startLength = unprocessedViewModels.length;
             var postponed = [];
+
+            if(optionalDependecies) {
+                log.debug("Instantiate with optional dependencies");
+            }
 
             // now try to instantiate every one of our as of yet unprocessed view model descriptors
             while (unprocessedViewModels.length > 0){
@@ -290,11 +315,16 @@ $(function() {
             // couldn't instantiate any more view models over a whole iteration, which in turn mean we can't resolve the
             // dependencies of remaining ones, so log that as an error and then quit the loop
             if (unprocessedViewModels.length == startLength) {
-                log.error("Could not instantiate the following view models due to unresolvable dependencies:");
-                _.each(unprocessedViewModels, function(entry) {
-                    log.error(entry[0].name + " (missing: " + _.filter(entry[1], function(id) { return !_.has(viewModelMap, id); }).join(", ") + " )");
-                });
-                break;
+                // however before quiting, lets first do a final check with optional dependecies
+                if(!optionalDependecies) {
+                    optionalDependecies = true;
+                } else {
+                    log.error("Could not instantiate the following view models due to unresolvable dependencies:");
+                    _.each(unprocessedViewModels, function(entry) {
+                        log.error(entry[0].name + " (missing: " + _.filter(entry[1], function(id) { return !_.has(viewModelMap, id); }).join(", ") + " )");
+                    });
+                    break;
+                }
             }
 
             log.debug("Dependency resolution pass #" + pass + " finished, " + unprocessedViewModels.length + " view models left to process");
