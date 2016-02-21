@@ -931,6 +931,11 @@ class Server():
 			"js/app/dataupdater.js",
 			"js/app/helpers.js",
 			"js/app/main.js",
+			"js/app/octoprint/constructor.js",
+			"js/app/octoprint/viewmodels/_emit.js",
+			"js/app/octoprint/viewmodels/_init.js",
+			"js/app/octoprint/viewmodels/bind.js",
+			"js/app/octoprint/viewmodels/construct.js"
 		]
 
 		css_libs = [

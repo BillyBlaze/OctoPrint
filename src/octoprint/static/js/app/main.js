@@ -166,143 +166,193 @@ $(function() {
             return notify;
         };
 
-        //~~ Initialize view models
+		var OctoPrint2 = new _octoprint({
+	        baseUrl: BASEURL,
+	        apiKey: UI_API_KEY
+		});
 
-        // the view model map is our basic look up table for dependencies that may be injected into other view models
-        var viewModelMap = {};
+        // //~~ Initialize view models
+		//
+        // // the view model map is our basic look up table for dependencies that may be injected into other view models
+        // var viewModelMap = {};
+		//
+        // // Fix Function#name on browsers that do not support it (IE):
+        // // see: http://stackoverflow.com/questions/6903762/function-name-not-supported-in-ie
+        // if (!(function f() {}).name) {
+        //     Object.defineProperty(Function.prototype, 'name', {
+        //         get: function() {
+        //             return this.toString().match(/^\s*function\s*(\S*)\s*\(/)[1];
+        //         }
+        //     });
+        // }
+		//
+        // // helper to create a view model instance with injected constructor parameters from the view model map
+        // var _createViewModelInstance = function(viewModel) {
+		//
+        //     // mirror the requested dependencies with an array of the viewModels
+        //     var viewModelParametersMap = function(parameter) {
+        //         // check if parameter is found within optional array and if all conditions are met return null instead of undefined
+        //         if (viewModel.optional.indexOf(parameter) !== -1 && !allViewModels[parameter]) {
+        //             log.debug("Resolving optional parameter", [parameter], "without viewmodel");
+        //             return null;
+        //         }
+		//
+        //         return allViewModels[parameter].construct || undefined;
+        //     };
+		//
+        //     // try to resolve all of the view model's constructor parameters via our view model map
+        //     var constructorParameters = _.map(viewModel.dependencies, viewModelParametersMap) || [];
+		//
+        //     // transform array into object if a plugin wants it as an object
+        //     constructorParameters = (viewModel.returnObject) ? _.object(viewModel.dependencies, constructorParameters) : constructorParameters;
+		//
+        //     // if we came this far then we could resolve all constructor parameters, so let's construct that view model
+        //     log.debug("Constructing", viewModel.name, "with parameters:", viewModel.dependencies);
+        //     return new viewModel.construct(constructorParameters);
+        // };
+		//
+        // // map any additional view model bindings we might need to make
+        // var additionalBindings = {};
+        // _.each(OCTOPRINT_ADDITIONAL_BINDINGS, function(bindings) {
+        //     var viewModelId = bindings[0];
+        //     var viewModelBindTargets = bindings[1];
+        //     if (!_.isArray(viewModelBindTargets)) {
+        //         viewModelBindTargets = [viewModelBindTargets];
+        //     }
+		//
+        //     if (!additionalBindings.hasOwnProperty(viewModelId)) {
+        //         additionalBindings[viewModelId] = viewModelBindTargets;
+        //     } else {
+        //         additionalBindings[viewModelId] = additionalBindings[viewModelId].concat(viewModelBindTargets);
+        //     }
+        // });
+		//
+        // // helper for translating the name of a view model class into an identifier for the view model map
+        // var _getViewModelId = function(name){
+        //     return name.substr(0, 1).toLowerCase() + name.substr(1); // FooBarViewModel => fooBarViewModel
+        // };
 
-        // Fix Function#name on browsers that do not support it (IE):
-        // see: http://stackoverflow.com/questions/6903762/function-name-not-supported-in-ie
-        if (!(function f() {}).name) {
-            Object.defineProperty(Function.prototype, 'name', {
-                get: function() {
-                    return this.toString().match(/^\s*function\s*(\S*)\s*\(/)[1];
-                }
-            });
-        }
 
-        // helper to create a view model instance with injected constructor parameters from the view model map
-        var _createViewModelInstance = function(viewModel, viewModelMap){
-            var viewModelClass = viewModel[0];
-            var viewModelParameters = viewModel[1];
 
-            if (viewModelParameters != undefined) {
-                if (!_.isArray(viewModelParameters)) {
-                    viewModelParameters = [viewModelParameters];
-                }
+		// var dataUpdaterViewModel = new DataUpdater(allViewModels);
 
-                // now we'll try to resolve all of the view model's constructor parameters via our view model map
-                var constructorParameters = _.map(viewModelParameters, function(parameter){
-                    return viewModelMap[parameter]
-                });
-            } else {
-                constructorParameters = [];
-            }
 
-            if (_.some(constructorParameters, function(parameter) { return parameter === undefined; })) {
-                var _extractName = function(entry) { return entry[0]; };
-                var _onlyUnresolved = function(entry) { return entry[1] === undefined; };
-                var missingParameters = _.map(_.filter(_.zip(viewModelParameters, constructorParameters), _onlyUnresolved), _extractName);
-                log.debug("Postponing", viewModel[0].name, "due to missing parameters:", missingParameters);
-                return;
-            }
 
-            // if we came this far then we could resolve all constructor parameters, so let's construct that view model
-            log.debug("Constructing", viewModel[0].name, "with parameters:", viewModelParameters);
-            return new viewModelClass(constructorParameters);
-        };
 
-        // map any additional view model bindings we might need to make
-        var additionalBindings = {};
-        _.each(OCTOPRINT_ADDITIONAL_BINDINGS, function(bindings) {
-            var viewModelId = bindings[0];
-            var viewModelBindTargets = bindings[1];
-            if (!_.isArray(viewModelBindTargets)) {
-                viewModelBindTargets = [viewModelBindTargets];
-            }
+		// return;
+		// _.each(processList, function(entry, i) {
+        //     var viewModelInstance = _createViewModelInstance(entry, viewModelMap);
+		//
+        //     // our view model couldn't yet be instantiated, so postpone it for a bit
+        //     if (viewModelInstance === undefined) {
+        //         log.error(entry.name + " (missing: " + entry.dependencies);
+        //         return;
+        //     }
+		//
+        //     // we could resolve the depdendencies and the view model is not defined yet => add it, it's now fully processed
+        //     var viewModelBindTargets = entry.elements;
+		//
+        //     if (additionalBindings.hasOwnProperty(entry.name)) {
+        //         viewModelBindTargets = viewModelBindTargets.concat(additionalBindings[entry.name]);
+        //     }
+		//
+        //     allViewModelData.push([viewModelInstance, viewModelBindTargets]);
+        //     //allViewModels.push(viewModelInstance);
+        //     //viewModelMap[entry.name] = viewModelInstance;
+		// 	allViewModels[entry.name] = viewModelInstance;
+		// });
+		//
+		// console.log(viewModelMap);
+		// return;
 
-            if (!additionalBindings.hasOwnProperty(viewModelId)) {
-                additionalBindings[viewModelId] = viewModelBindTargets;
-            } else {
-                additionalBindings[viewModelId] = additionalBindings[viewModelId].concat(viewModelBindTargets);
-            }
-        });
-
-        // helper for translating the name of a view model class into an identifier for the view model map
-        var _getViewModelId = function(viewModel){
-            var name = viewModel[0].name;
-            return name.substr(0, 1).toLowerCase() + name.substr(1); // FooBarViewModel => fooBarViewModel
-        };
-
-        // instantiation loop, will make multiple passes over the list of unprocessed view models until all
-        // view models have been successfully instantiated with all of their dependencies or no changes can be made
-        // any more which means not all view models can be instantiated due to missing dependencies
-        var unprocessedViewModels = OCTOPRINT_VIEWMODELS.slice();
-        unprocessedViewModels = unprocessedViewModels.concat(ADDITIONAL_VIEWMODELS);
-
-        var allViewModels = [];
-        var allViewModelData = [];
-        var pass = 1;
-        log.info("Starting dependency resolution...");
-        while (unprocessedViewModels.length > 0) {
-            log.debug("Dependency resolution, pass #" + pass);
-            var startLength = unprocessedViewModels.length;
-            var postponed = [];
-
-            // now try to instantiate every one of our as of yet unprocessed view model descriptors
-            while (unprocessedViewModels.length > 0){
-                var viewModel = unprocessedViewModels.shift();
-                var viewModelId = _getViewModelId(viewModel);
-
-                // make sure that we don't have two view models going by the same name
-                if (_.has(viewModelMap, viewModelId)) {
-                    log.error("Duplicate name while instantiating " + viewModelId);
-                    continue;
-                }
-
-                var viewModelInstance = _createViewModelInstance(viewModel, viewModelMap);
-
-                // our view model couldn't yet be instantiated, so postpone it for a bit
-                if (viewModelInstance === undefined) {
-                    postponed.push(viewModel);
-                    continue;
-                }
-
-                // we could resolve the depdendencies and the view model is not defined yet => add it, it's now fully processed
-                var viewModelBindTargets = viewModel[2];
-                if (!_.isArray(viewModelBindTargets)) {
-                    viewModelBindTargets = [viewModelBindTargets];
-                }
-
-                if (additionalBindings.hasOwnProperty(viewModelId)) {
-                    viewModelBindTargets = viewModelBindTargets.concat(additionalBindings[viewModelId]);
-                }
-
-                allViewModelData.push([viewModelInstance, viewModelBindTargets]);
-                allViewModels.push(viewModelInstance);
-                viewModelMap[viewModelId] = viewModelInstance;
-            }
-
-            // anything that's now in the postponed list has to be readded to the unprocessedViewModels
-            unprocessedViewModels = unprocessedViewModels.concat(postponed);
-
-            // if we still have the same amount of items in our list of unprocessed view models it means that we
-            // couldn't instantiate any more view models over a whole iteration, which in turn mean we can't resolve the
-            // dependencies of remaining ones, so log that as an error and then quit the loop
-            if (unprocessedViewModels.length == startLength) {
-                log.error("Could not instantiate the following view models due to unresolvable dependencies:");
-                _.each(unprocessedViewModels, function(entry) {
-                    log.error(entry[0].name + " (missing: " + _.filter(entry[1], function(id) { return !_.has(viewModelMap, id); }).join(", ") + " )");
-                });
-                break;
-            }
-
-            log.debug("Dependency resolution pass #" + pass + " finished, " + unprocessedViewModels.length + " view models left to process");
-            pass++;
-        }
-        log.info("... dependency resolution done");
-
-        var dataUpdater = new DataUpdater(allViewModels);
+        // var allViewModels = [];
+        // var allViewModelData = [];
+        // var pass = 1;
+        // var optionalDependencyPass = false;
+        // log.info("Starting dependency resolution...");
+        // while (unprocessedViewModels.length > 0) {
+        //     log.debug("Dependency resolution, pass #" + pass);
+        //     var startLength = unprocessedViewModels.length;
+        //     var postponed = [];
+		//
+        //     // now try to instantiate every one of our as of yet unprocessed view model descriptors
+        //     while (unprocessedViewModels.length > 0){
+        //         var viewModel = unprocessedViewModels.shift();
+		//
+        //         // wrap anything not object related into an object (use jQuery since lodash returns invalid results)
+        //         if(!$.isPlainObject(viewModel)) {
+        //             viewModel = {
+        //                 construct: (_.isArray(viewModel)) ? viewModel[0] : viewModel,
+        //                 dependencies: viewModel[1] || [],
+        //                 elements: viewModel[2] || [],
+        //                 optional: viewModel[3] || []
+        //             };
+        //         }
+		//
+        //         // make sure we have atleast a function
+        //         if (!_.isFunction(viewModel.construct)) {
+        //             log.error("No function to instantiate with", viewModel);
+        //             continue;
+        //         }
+		//
+        //         // if name is not set, get name from constructor, if it's an anonymous function generate one
+        //         viewModel.name = viewModel.name || _getViewModelId(viewModel.construct.name) || _.uniqueId("unnamedViewModel");
+		//
+        //         // make sure all value's are in an array
+        //         viewModel.dependencies = (_.isArray(viewModel.dependencies)) ? viewModel.dependencies : [viewModel.dependencies];
+        //         viewModel.elements = (_.isArray(viewModel.elements)) ? viewModel.elements : [viewModel.elements];
+        //         viewModel.optional = (_.isArray(viewModel.optional)) ? viewModel.optional : [viewModel.optional];
+		//
+        //         // make sure that we don't have two view models going by the same name
+        //         if (_.has(viewModelMap, viewModel.name)) {
+        //             log.error("Duplicate name while instantiating " + viewModel.name);
+        //             continue;
+        //         }
+		//
+        //         var viewModelInstance = _createViewModelInstance(viewModel, viewModelMap);
+		//
+        //         // our view model couldn't yet be instantiated, so postpone it for a bit
+        //         if (viewModelInstance === undefined) {
+        //             postponed.push(viewModel);
+        //             continue;
+        //         }
+		//
+        //         // we could resolve the depdendencies and the view model is not defined yet => add it, it's now fully processed
+        //         var viewModelBindTargets = viewModel.elements;
+		//
+        //         if (additionalBindings.hasOwnProperty(viewModel.name)) {
+        //             viewModelBindTargets = viewModelBindTargets.concat(additionalBindings[viewModel.name]);
+        //         }
+		//
+        //         allViewModelData.push([viewModelInstance, viewModelBindTargets]);
+        //         allViewModels.push(viewModelInstance);
+        //         viewModelMap[viewModel.name] = viewModelInstance;
+        //     }
+		//
+        //     // anything that's now in the postponed list has to be readded to the unprocessedViewModels
+        //     unprocessedViewModels = unprocessedViewModels.concat(postponed);
+		//
+        //     // if we still have the same amount of items in our list of unprocessed view models it means that we
+        //     // couldn't instantiate any more view models over a whole iteration, which in turn mean we can't resolve the
+        //     // dependencies of remaining ones, so log that as an error and then quit the loop
+        //     if (unprocessedViewModels.length === startLength) {
+        //         // I'm gonna let you finish but we will do another pass with the optional dependencies flag enabled
+        //         if(!optionalDependencyPass) {
+        //             log.debug("Resolving next pass with optional dependencies flag enabled");
+        //             optionalDependencyPass = true;
+        //         } else {
+        //             log.error("Could not instantiate the following view models due to unresolvable dependencies:");
+        //             _.each(unprocessedViewModels, function(entry) {
+        //                 log.error(entry.name + " (missing: " + _.filter(entry.dependencies, function(id) { return !_.has(viewModelMap, id); }).join(", ") + " )");
+        //             });
+        //             break;
+        //         }
+        //     }
+		//
+        //     log.debug("Dependency resolution pass #" + pass + " finished, " + unprocessedViewModels.length + " view models left to process");
+        //     pass++;
+        // }
+        // log.info("... dependency resolution done");
 
         //~~ some additional hooks and initializations
 
@@ -393,7 +443,7 @@ $(function() {
         var onTabChange = function(current, previous) {
             log.debug("Selected OctoPrint tab changed: previous = " + previous + ", current = " + current);
             OctoPrint.coreui.selectedTab = current;
-            callViewModels(allViewModels, "onTabChange", [current, previous]);
+            OctoPrint2.viewModels._emit(OctoPrint2.viewModels.all, "onTabChange", [current, previous]);
         };
 
         var tabs = $('#tabs a[data-toggle="tab"]');
@@ -406,7 +456,7 @@ $(function() {
         tabs.on('shown', function (e) {
             var current = e.target.hash;
             var previous = e.relatedTarget.hash;
-            callViewModels(allViewModels, "onAfterTabChange", [current, previous]);
+            OctoPrint2.viewModels._emit(OctoPrint2.viewModels.all, "onAfterTabChange", [current, previous]);
         });
 
         onTabChange(OCTOPRINT_INITIAL_TAB);
@@ -424,103 +474,103 @@ $(function() {
         // reload overlay
         $("#reloadui_overlay_reload").click(function() { location.reload(); });
 
-        //~~ Starting up the app
-
-        callViewModels(allViewModels, "onStartup");
-
-        //~~ view model binding
-
-        var bindViewModels = function() {
-            log.info("Going to bind " + allViewModelData.length + " view models...");
-            _.each(allViewModelData, function(viewModelData) {
-                if (!Array.isArray(viewModelData) || viewModelData.length != 2) {
-                    return;
-                }
-
-                var viewModel = viewModelData[0];
-                var targets = viewModelData[1];
-
-                if (targets === undefined) {
-                    return;
-                }
-
-                if (!_.isArray(targets)) {
-                    targets = [targets];
-                }
-
-                if (viewModel.hasOwnProperty("onBeforeBinding")) {
-                    viewModel.onBeforeBinding();
-                }
-
-                if (targets != undefined) {
-                    if (!_.isArray(targets)) {
-                        targets = [targets];
-                    }
-
-                    viewModel._bindings = [];
-
-                    _.each(targets, function(target) {
-                        if (target == undefined) {
-                            return;
-                        }
-
-                        var object;
-                        if (!(target instanceof jQuery)) {
-                            object = $(target);
-                        } else {
-                            object = target;
-                        }
-
-                        if (object == undefined || !object.length) {
-                            log.info("Did not bind view model", viewModel.constructor.name, "to target", target, "since it does not exist");
-                            return;
-                        }
-
-                        var element = object.get(0);
-                        if (element == undefined) {
-                            log.info("Did not bind view model", viewModel.constructor.name, "to target", target, "since it does not exist");
-                            return;
-                        }
-
-                        try {
-                            ko.applyBindings(viewModel, element);
-                            viewModel._bindings.push(target);
-
-                            if (viewModel.hasOwnProperty("onBoundTo")) {
-                                viewModel.onBoundTo(target, element);
-                            }
-
-                            log.debug("View model", viewModel.constructor.name, "bound to", target);
-                        } catch (exc) {
-                            log.error("Could not bind view model", viewModel.constructor.name, "to target", target, ":", (exc.stack || exc));
-                        }
-                    });
-                }
-
-                viewModel._unbound = viewModel._bindings != undefined && viewModel._bindings.length == 0;
-
-                if (viewModel.hasOwnProperty("onAfterBinding")) {
-                    viewModel.onAfterBinding();
-                }
-            });
-
-            callViewModels(allViewModels, "onAllBound", [allViewModels]);
-            log.info("... binding done");
-
-            // startup complete
-            callViewModels(allViewModels, "onStartupComplete");
-
-            // make sure we can track the browser tab visibility
-            OctoPrint.coreui.onBrowserVisibilityChange(function(status) {
-                log.debug("Browser tab is now " + (status ? "visible" : "hidden"));
-                callViewModels(allViewModels, "onBrowserTabVisibilityChange", [status]);
-            });
-        };
-
-        if (!_.has(viewModelMap, "settingsViewModel")) {
-            throw new Error("settingsViewModel is missing, can't run UI")
-        }
-        viewModelMap["settingsViewModel"].requestData()
-            .done(bindViewModels);
+        // //~~ Starting up the app
+		//
+        // callViewModels(allViewModels, "onStartup");
+		//
+        // //~~ view model binding
+		//
+        // var bindViewModels = function() {
+        //     log.info("Going to bind " + allViewModels.length + " view models...");
+        //     _.each(allViewModels, function(viewModelData) {
+        //         if (!viewModelData.elements.length) {
+        //             return;
+        //         }
+		//
+        //         var viewModel = viewModelData.construct;
+        //         var targets = viewModelData.elements;
+		//
+        //         if (targets === undefined) {
+        //             return;
+        //         }
+		//
+        //         if (!_.isArray(targets)) {
+        //             targets = [targets];
+        //         }
+		//
+        //         if (viewModel.hasOwnProperty("onBeforeBinding")) {
+        //             viewModelData.construct.onBeforeBinding.call(viewModel);
+        //         }
+		//
+        //         if (targets != undefined) {
+        //             if (!_.isArray(targets)) {
+        //                 targets = [targets];
+        //             }
+		//
+        //             viewModel._bindings = [];
+		//
+        //             _.each(targets, function(target) {
+        //                 if (target == undefined) {
+        //                     return;
+        //                 }
+		//
+        //                 var object;
+        //                 if (!(target instanceof jQuery)) {
+        //                     object = $(target);
+        //                 } else {
+        //                     object = target;
+        //                 }
+		//
+        //                 if (object == undefined || !object.length) {
+        //                     log.info("Did not bind view model", viewModel.constructor.name, "to target", target, "since it does not exist");
+        //                     return;
+        //                 }
+		//
+        //                 var element = object.get(0);
+        //                 if (element == undefined) {
+        //                     log.info("Did not bind view model", viewModel.constructor.name, "to target", target, "since it does not exist");
+        //                     return;
+        //                 }
+		//
+        //                 try {
+        //                     ko.applyBindings(viewModel, element);
+        //                     viewModel._bindings.push(target);
+		//
+        //                     if (viewModel.hasOwnProperty("onBoundTo")) {
+        //                         viewModel.onBoundTo(target, element);
+        //                     }
+		//
+        //                     log.debug("View model", viewModel.constructor.name, "bound to", target);
+        //                 } catch (exc) {
+        //                     log.error("Could not bind view model", viewModel.constructor.name, "to target", target, ":", (exc.stack || exc));
+        //                 }
+        //             });
+        //         }
+		//
+        //         viewModel._unbound = viewModel._bindings != undefined && viewModel._bindings.length == 0;
+		//
+        //         if (viewModel.hasOwnProperty("onAfterBinding")) {
+        //             viewModel.onAfterBinding.call(viewModel);
+        //         }
+        //     });
+		//
+        //     callViewModels(allViewModels, "onAllBound", [allViewModels]);
+        //     log.info("... binding done");
+		//
+        //     // startup complete
+        //     callViewModels(allViewModels, "onStartupComplete");
+		//
+        //     // make sure we can track the browser tab visibility
+        //     OctoPrint.coreui.onBrowserVisibilityChange(function(status) {
+        //         log.debug("Browser tab is now " + (status ? "visible" : "hidden"));
+        //         callViewModels(allViewModels, "onBrowserTabVisibilityChange", [status]);
+        //     });
+        // };
+		//
+        // if (!_.has(allViewModels, "settingsViewModel")) {
+        //     throw new Error("settingsViewModel is missing, can't run UI")
+        // }
+        // allViewModels["settingsViewModel"].construct.requestData()
+        //     .done(bindViewModels);
     }
 );

@@ -714,6 +714,7 @@ function callViewModelsIf(allViewModels, method, condition, callback) {
     }
 
     _.each(allViewModels, function(viewModel) {
+		viewModel = viewModel.construct;
         if (viewModel.hasOwnProperty(method) && condition(viewModel, method)) {
             if (callback == undefined) {
                 if (parameters != undefined) {
